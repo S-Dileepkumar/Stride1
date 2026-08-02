@@ -1,0 +1,6 @@
+{
+  "name": "Stride & Speak",
+  "description": "Sensor-based step & session tracker with AI-powered speech practice analysis via Gemini, calendar heatmaps, and streak tracking.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
