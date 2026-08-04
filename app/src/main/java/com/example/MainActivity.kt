@@ -1,5 +1,6 @@
 package com.example
 
+import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -139,12 +140,12 @@ fun StrideAndSpeakApp(
     val musicPlayerState by musicAudioEngine.playerState.collectAsState()
     var showExpandedMusicPlayer by remember { mutableStateOf(false) }
 
-    // Walkthrough Tutorial Dialog State
-    var showOnboardingTutorial by remember { mutableStateOf(false) }
-    LaunchedEffect(userSettings.hasSeenOnboarding) {
-        if (!userSettings.hasSeenOnboarding) {
-            showOnboardingTutorial = true
-        }
+    val context = LocalContext.current
+    val prefs = remember(context) { context.getSharedPreferences("stride_speak_prefs", Context.MODE_PRIVATE) }
+
+    // Walkthrough Tutorial Dialog State - Shown ONCE after installation
+    var showOnboardingTutorial by remember {
+        mutableStateOf(!prefs.getBoolean("has_seen_onboarding_tutorial", false) && !userSettings.hasSeenOnboarding)
     }
 
     // Analytics Derived Data
@@ -205,8 +206,6 @@ fun StrideAndSpeakApp(
         }
         streak
     }
-
-    val context = LocalContext.current
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -399,6 +398,7 @@ fun StrideAndSpeakApp(
             OnboardingTutorialDialog(
                 onDismiss = {
                     showOnboardingTutorial = false
+                    prefs.edit().putBoolean("has_seen_onboarding_tutorial", true).apply()
                     scope.launch(Dispatchers.IO) {
                         settingsRepository.saveSettings(userSettings.copy(hasSeenOnboarding = true))
                     }

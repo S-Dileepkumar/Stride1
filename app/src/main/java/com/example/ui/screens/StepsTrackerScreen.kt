@@ -1,5 +1,6 @@
 package com.example.ui.screens
 
+import android.content.Context
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -58,6 +59,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -95,7 +97,11 @@ fun StepsTrackerScreen(
     var elapsedSeconds by remember { mutableLongStateOf(0L) }
     var showManualModal by remember { mutableStateOf(false) }
     var sessionToEdit by remember { mutableStateOf<StepSession?>(null) }
-    var showPermissionCard by remember { mutableStateOf(true) }
+    val context = LocalContext.current
+    val prefs = remember(context) { context.getSharedPreferences("stride_speak_prefs", Context.MODE_PRIVATE) }
+    var showPermissionCard by remember {
+        mutableStateOf(!prefs.getBoolean("has_responded_motion_sensor_card", false))
+    }
 
     // Live session timer
     LaunchedEffect(isSessionActive, isSessionPaused) {
@@ -156,13 +162,19 @@ fun StepsTrackerScreen(
             }
         }
 
-        // Optional Sensor Permission Card
+        // Optional Sensor Permission Card - Shown ONCE until responded
         if (showPermissionCard && !isSessionActive) {
             item {
                 MotionPermissionCard(
                     isSensorAvailable = isSensorAvailable,
-                    onEnableMotionAccess = { showPermissionCard = false },
-                    onUseManualFallback = { showPermissionCard = false }
+                    onEnableMotionAccess = {
+                        showPermissionCard = false
+                        prefs.edit().putBoolean("has_responded_motion_sensor_card", true).apply()
+                    },
+                    onUseManualFallback = {
+                        showPermissionCard = false
+                        prefs.edit().putBoolean("has_responded_motion_sensor_card", true).apply()
+                    }
                 )
             }
         }
